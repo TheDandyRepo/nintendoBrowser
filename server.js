@@ -25,17 +25,22 @@ app.get("/proxy", async (req, res) => {
       headers: { "User-Agent": "Mozilla/5.0" }
     });
 
-    const body = await response.text();
+    // Copy status code from the target
+    res.status(response.status);
 
-    // Force it to be HTML
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(body);
+    // Copy content type from the target
+    res.setHeader("Content-Type", response.headers.get("content-type") || "text/plain");
+
+    // Stream response directly to the client
+    response.body.pipe(res);
 
     console.log(`Proxied: ${target}`);
   } catch (err) {
+    console.error(err);
     res.status(500).send(`<h1>Cannot load ${target}</h1>`);
   }
 });
+
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Proxy server running on port ${PORT}`);
