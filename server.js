@@ -6,17 +6,13 @@ import { fileURLToPath } from "url";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Fix __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve your frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-// Maximum allowed response size (50 MB)
-const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
-// General-purpose proxy
 app.get("/proxy", async (req, res) => {
   const target = req.query.url;
   if (!target) return res.status(400).send("Missing ?url=");
@@ -30,14 +26,14 @@ app.get("/proxy", async (req, res) => {
     // Forward status
     res.status(response.status);
 
-    // Forward headers (skip hop-by-hop headers that break Express)
+    // Forward headers, but strip X-Frame-Options and CSP
     response.headers.forEach((value, key) => {
-      if (!["transfer-encoding", "content-encoding", "connection"].includes(key)) {
+      if (!["transfer-encoding", "content-encoding", "connection", "x-frame-options", "content-security-policy"].includes(key)) {
         res.setHeader(key, value);
       }
     });
 
-    // Stream the response to the client with size check
+    // Stream response with size check
     let downloaded = 0;
     response.body.on("data", chunk => {
       downloaded += chunk.length;
@@ -54,11 +50,6 @@ app.get("/proxy", async (req, res) => {
     console.error(err);
     if (!res.headersSent) res.status(500).send(`<h1>Cannot load ${target}</h1>`);
   }
-});
-
-// Catch-all for frontend routes (optional SPA support)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", () => {
