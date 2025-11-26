@@ -1,9 +1,11 @@
+import express from "express";
 import fetch from "node-fetch";
-import * as functions from "firebase-functions";
 
-export const proxy = functions.https.onRequest(async (req, res) => {
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/proxy", async (req, res) => {
   const target = req.query.url;
-
   if (!target) return res.status(400).send("Missing ?url=");
 
   try {
@@ -17,4 +19,8 @@ export const proxy = functions.https.onRequest(async (req, res) => {
   } catch (err) {
     res.status(500).send("Proxy error");
   }
+});
+
+app.listen(PORT, () => {
+  console.log(`Proxy server running on port ${PORT}`);
 });
