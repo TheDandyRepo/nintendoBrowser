@@ -1,18 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Old Browser</title>
+  <meta charset="UTF-8">
+  <title>Switch Browser</title>
   <style>
-    body { margin: 0; font-family: sans-serif; }
-    #bar { padding: 10px; background: #e0e0e0; display: flex; gap: 10px; }
-    #addr { flex: 1; padding: 8px; }
-    iframe { width: 100vw; height: calc(100vh - 50px); border: none; }
+    /* Reset and body */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #e60012; color: #fff; }
+
+    /* Top bar (like Switch top menu) */
+    #bar {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      background: linear-gradient(90deg, #e60012, #ff4500);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    #addr {
+      flex: 1;
+      padding: 10px;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      outline: none;
+    }
+
+    #go {
+      padding: 10px 18px;
+      margin-left: 10px;
+      background: #ffdd00;
+      color: #e60012;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    #go:hover { transform: scale(1.05); }
+
+    /* Iframe container */
+    iframe {
+      width: 100vw;
+      height: calc(100vh - 60px);
+      border: none;
+      background: #fff;
+    }
+
+    /* Optional: placeholder for a Switch-style logo */
+    #logo {
+      font-weight: bold;
+      font-size: 20px;
+      margin-right: 15px;
+      color: #fff;
+      font-family: 'Arial Black', sans-serif;
+      text-shadow: 2px 2px #900;
+    }
   </style>
 </head>
 <body>
+
   <div id="bar">
+    <div id="logo">SWITCH BROWSER</div>
     <input id="addr" placeholder="Enter URL…">
-    <button id="go">Go</button>
+    <button id="go">GO</button>
   </div>
 
   <iframe id="view"></iframe>
@@ -27,6 +79,12 @@
       if (!/^https?:\/\//i.test(url)) url = "https://" + url;
       view.src = "/proxy?url=" + encodeURIComponent(url);
     };
+
+    // Enter key support
+    addr.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") go.click();
+    });
   </script>
+
 </body>
 </html>
