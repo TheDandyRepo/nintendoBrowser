@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_SIZE = 50 * 1024 * 1024;
 
 app.get("/proxy", async (req, res) => {
   const target = req.query.url;
@@ -23,35 +23,41 @@ app.get("/proxy", async (req, res) => {
       redirect: "follow"
     });
 
-    // Forward status
     res.status(response.status);
 
-    // Forward headers, but strip X-Frame-Options and CSP
     response.headers.forEach((value, key) => {
-      if (!["transfer-encoding", "content-encoding", "connection", "x-frame-options", "content-security-policy"].includes(key)) {
+      const blocked = [
+        "x-frame-options",
+        "content-security-policy",
+        "content-security-policy-report-only",
+        "cross-origin-opener-policy",
+        "cross-origin-embedder-policy",
+        "cross-origin-resource-policy"
+      ];
+
+      if (!blocked.includes(key.toLowerCase())) {
         res.setHeader(key, value);
       }
     });
 
-    // Stream response with size check
-    let downloaded = 0;
+    let size = 0;
     response.body.on("data", chunk => {
-      downloaded += chunk.length;
-      if (downloaded > MAX_SIZE) {
+      size += chunk.length;
+      if (size > MAX_SIZE) {
         response.body.destroy();
-        if (!res.headersSent) res.status(413).send("Response too large");
+        if (!res.headersSent) res.status(413).send("Too Large");
       }
     });
 
     response.body.pipe(res);
 
-    console.log(`Proxied: ${target}`);
   } catch (err) {
     console.error(err);
-    if (!res.headersSent) res.status(500).send(`<h1>Cannot load ${target}</h1>`);
+    if (!res.headersSent)
+      res.status(500).send(`<h1>Unable to load ${target}</h1>`);
   }
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Proxy server running on port ${PORT}`);
+  console.log("Switch-style browser running on port", PORT);
 });
