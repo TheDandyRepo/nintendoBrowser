@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Old Browser</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #bar { padding: 10px; background: #e0e0e0; display: flex; gap: 10px; }
+    #addr { flex: 1; padding: 8px; }
+    iframe { width: 100vw; height: calc(100vh - 50px); border: none; }
+  </style>
+</head>
+<body>
+  <div id="bar">
+    <input id="addr" placeholder="Enter URL…">
+    <button id="go">Go</button>
+  </div>
+
+  <iframe id="view"></iframe>
+
+  <script>
+    const addr = document.getElementById("addr");
+    const go = document.getElementById("go");
+    const view = document.getElementById("view");
+
+    go.onclick = () => {
+      let url = addr.value.trim();
+      if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+      view.src = "/proxy?url=" + encodeURIComponent(url);
+    };
+  </script>
+</body>
+</html>
