@@ -1,5 +1,5 @@
 import express from "express";
-import fetch from "node-fetch"; // optional if Node <18
+import fetch from "node-fetch";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -10,37 +10,36 @@ const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve your HTML page
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
+// Serve your frontend
+app.use(express.static(path.join(__dirname, "public")));
 
-// Proxy endpoint
+// General-purpose proxy
 app.get("/proxy", async (req, res) => {
   const target = req.query.url;
   if (!target) return res.status(400).send("Missing ?url=");
 
   try {
     const response = await fetch(target, {
-      headers: { "User-Agent": "Mozilla/5.0" }
+      headers: { "User-Agent": "Mozilla/5.0" },
+      redirect: "follow"
     });
 
-    // Copy status code from the target
+    // Forward status and headers
     res.status(response.status);
+    response.headers.forEach((value, key) => {
+      // Skip hop-by-hop headers that break Express
+      if (!["transfer-encoding", "content-encoding", "connection"].includes(key)) {
+        res.setHeader(key, value);
+      }
+    });
 
-    // Copy content type from the target
-    res.setHeader("Content-Type", response.headers.get("content-type") || "text/plain");
-
-    // Stream response directly to the client
+    // Stream the response to the client
     response.body.pipe(res);
-
-    console.log(`Proxied: ${target}`);
   } catch (err) {
     console.error(err);
     res.status(500).send(`<h1>Cannot load ${target}</h1>`);
   }
 });
-
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Proxy server running on port ${PORT}`);
